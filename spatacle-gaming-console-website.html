@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spatacle y Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css?family=Manrope:700|Manrope:400" rel="stylesheet">
+    <style>
+        :root {
+            --text: hsl(0, 0%, 99%);
+            --textDim: hsl(0, 0%, 60%);
+            --background: hsl(0, 0%, 7%);
+            --primary: hsl(155, 100%, 65%);
+            --primaryBg: hsla(155, 100%, 65%, 1%);
+            --primaryHi: hsla(155, 100%, 75%, 25%);
+            --primaryFg: hsl(155, 100%, 85%);
+            --secondary: hsl(156, 51%, 14%);
+            --secondaryFg: hsl(156, 51%, 75%);
+            --secondaryBg: hsla(156, 51%, 14%, 5%);
+            --secondaryHi: hsla(156, 51%, 30%, 50%);
+            --accent: hsl(155, 100%, 94%);
+            --accentBg: hsla(155, 100%, 94%, 1%);
+            --accentHi: hsla(155, 100%, 100%, 25%);
+            
+            --primary-cyan: #00e1d9;
+            --bg-dark: #1a1a1a;
+            --bg-card: rgba(255, 255, 255, 0.07);
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: rgba(0, 0, 0, 0.25);
+            --glass-highlight: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Manrope', sans-serif;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 0.6; transform: scale(0.9); }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px 0 rgba(0, 225, 217, 0.3); }
+            50% { box-shadow: 0 0 20px 5px rgba(0, 225, 217, 0.5); }
+            100% { box-shadow: 0 0 5px 0 rgba(0, 225, 217, 0.3); }
+        }
+        
+        @keyframes borderPulse {
+            0% { border-color: rgba(0, 225, 217, 0.3); }
+            50% { border-color: rgba(0, 225, 217, 0.8); }
+            100% { border-color: rgba(0, 225, 217, 0.3); }
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: background-color 0.5s;
+        }
+        
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Glass morphism styles */
+        .glass {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                transparent,
+                var(--glass-highlight),
+                transparent
+            );
+            transform: skewX(-25deg);
+            z-index: -1;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            position: relative;
+            z-index: 10;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #ffffff, var(--primary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 5px 15px rgba(0, 225, 217, 0.3);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            margin-left: auto;
+            margin-right: 30px;
+        }
+        
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 16px;
+            position: relative;
+            padding-bottom: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-links a.active {
+            color: var(--primary);
+        }
+        
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-cyan);
+            animation: glow 2s infinite;
+        }
+        
+        .search-bar {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .search-bar:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .search-bar input {
+            background-color: transparent;
+            border: none;
+            color: var(--text-primary);
+            outline: none;
+            width: 150px;
+        }
+        
+        .search-bar svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-primary);
+        }
+        
+        /* Hero content styling */
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 0;
+            position: relative;
+            height: 550px;
+            animation: fadeIn 0.8s ease-out 0.2s forwards;
+            opacity: 0;
+        }
+        
+        .hero-content {
+            width: 40%;
+            z-index: 2;
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        /* Content slide styling */
+        .content-slide {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+        
+        .content-slide.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .hero-title {
+            font-size: 64px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(to right, #ffffff, var(--primary-cyan));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        
+        .hero-description {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            max-width: 400px;
+            line-height: 1.6;
+            font-weight: 300;
+            font-size: 18px;
+        }
+        
+        .dots-navigation {
+            display: flex;
+            gap: 8px;
+            margin: 30px 0;
+        }
+        
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        .dot:hover {
+            background-color: rgba(0, 225, 217, 0.5);
+        }
+        
+        .dot.active {
+            background-color: var(--primary-cyan);
+            box-shadow: 0 0 15px var(--primary-cyan);
+        }
+        
+        /* New styled button class based on the CSS snippet */
+        .styled-button {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            height: 50px;
+            width: 160px;
+            z-index: 9999;
+            margin-top: 20px;
+        }
+        
+        .styled-button button {
+            height: 50px;
+            width: 160px;
+            clip-path: path("M 0 25 C 0 -5, -5 0, 80 0 S 160 -5, 160 25, 165 50 80 50, 0 55, 0 25");
+            border: none;
+            border-radius: 13px;
+            background-color: var(--primaryBg);
+            box-shadow: 0px -3px 15px 0px var(--primaryHi) inset;
+            color: var(--primaryFg);
+            font-family: "Manrope";
+            font-size: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            transform: translateY(0px);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .styled-button span {
+            width: 100px;
+            height: 60px;
+            background-color: var(--primaryHi);
+            border-radius: 100%;
+            filter: blur(20px);
+            position: absolute;
+            bottom: -50%;
+            transition: all 0.2s ease;
+        }
+        
+        .styled-button:hover > span {
+            opacity: 60%;
+        }
+        
+        .styled-button:hover > button {
+            transform: translateY(5px);
+        }
+        
+        .buy-now {
+            height: 50px;
+            width: 160px;
+            position: relative;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin: 50px 0;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            animation: fadeIn 0.8s ease-out 0.4s forwards;
+            opacity: 0;
+        }
+        
+        /* Styling feature boxes to match the button effect - more square version */
+        .feature-box {
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            background-color: var(--primaryBg);
+            /* More square clip-path */
+            clip-path: polygon(0% 5%, 5% 0%, 95% 0%, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0% 95%);
+            border-radius: 8px;
+            box-shadow: 0px -3px 15px 0px var(--primaryHi) inset;
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .feature-box::after {
+            content: '';
+            width: 120px;
+            height: 80px;
+            background-color: var(--primaryHi);
+            border-radius: 100%;
+            filter: blur(20px);
+            position: absolute;
+            bottom: -30%;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-box:hover {
+            transform: translateY(5px);
+        }
+        
+        .feature-box:hover::after {
+            opacity: 0.6;
+        }
+        
+        .feature-box:nth-child(2) {
+            background-color: var(--accentBg);
+            box-shadow: 0px -3px 15px 0px var(--accentHi) inset;
+        }
+        
+        .feature-box:nth-child(2)::after {
+            background-color: var(--accentHi);
+        }
+        
+        .feature-box:nth-child(3) {
+            background-color: var(--secondaryBg);
+            box-shadow: 0px -3px 15px 0px var(--secondaryHi) inset;
+        }
+        
+        .feature-box:nth-child(3)::after {
+            background-color: var(--secondaryHi);
+        }
+        
+        .feature-box:nth-child(4) {
+            background-color: var(--primaryBg);
+            box-shadow: 0px -3px 15px 0px var(--primaryHi) inset;
+        }
+        
+        .feature-box:nth-child(5) {
+            background-color: var(--accentBg);
+            box-shadow: 0px -3px 15px 0px var(--accentHi) inset;
+        }
+        
+        .feature-box:nth-child(5)::after {
+            background-color: var(--accentHi);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 15px;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        .feature-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: var(--primary-cyan);
+            transition: all 0.3s;
+        }
+        
+        .feature-title {
+            color: var(--primary-cyan);
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .feature-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            font-weight: 300;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-info {
+            position: absolute;
+            right: 40px;
+            top: 150px;
+            width: 300px;
+            background-color: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 25px;
+            z-index: 3;
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border:.1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.8s ease-out 0.6s forwards;
+            opacity: 0;
+        }
+        
+        .sidebar-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.05) 0%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.02) 100%
+            );
+            z-index: -1;
+            border-radius: 15px;
+        }
+        
+        .sidebar-title {
+            color: var(--primary-cyan);
+            font-size: 26px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .dot-line {
+            display: flex;
+            gap: 5px;
+            margin: 15px 0;
+        }
+        
+        .mini-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background-color: var(--primary-cyan);
+            animation: pulse 3s infinite;
+            animation-delay: calc(var(--i) * 0.1s);
+        }
+        
+        .sidebar-description {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+        
+        .feature-tabs {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .feature-tab {
+            background-color: rgba(0, 225, 217, 0.2);
+            border-radius: 12px;
+            width: 90px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border: 1px solid rgba(0, 225, 217, 0.3);
+        }
+        
+        .feature-tab:hover {
+            background-color: var(--primary-cyan);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-tab svg {
+            width: 25px;
+            height: 25px;
+            fill: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s;
+        }
+        
+        .feature-tab:hover svg {
+            fill: var(--bg-dark);
+            transform: scale(1.1);
+        }
+        
+        .carousel-arrow {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .carousel-arrow:hover {
+            background-color: var(--primary-cyan);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .carousel-arrow svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+            transition: all 0.3s;
+        }
+        
+        .carousel-arrow:hover svg {
+            fill: var(--bg-dark);
+        }
+        
+        /* Page specific styles */
+        .page {
+            display: none;
+            min-height: 100vh;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        .page.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .page-header {
+            font-size: 48px;
+            margin-bottom: 30px;
+            color: var(--primary-cyan);
+            font-weight: 700;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.8s ease-out forwards;
+            background: linear-gradient(to right, #ffffff, var(--primary-cyan));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        
+        /* Features page layout */
+        .features-layout {
+            display: flex;
+            gap: 50px;
+            height: 70vh;
+        }
+        
+        .features-list {
+            width: 40%;
+            padding-right: 20px;
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            animation: fadeIn 0.8s ease-out 0.2s forwards;
+            opacity: 0;
+        }
+        
+        .feature-item {
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(16px);
+            margin-bottom: 20px;
+            padding: 25px;
+            cursor: pointer;
+            /* More square clip-path */
+            clip-path: polygon(0% 5%, 5% 0%, 95% 0%, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0% 95%);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0px -3px 15px 0px rgba(0, 225, 217, 0.1) inset;
+            transform: translateY(0);
+            position: relative;
+        }
+        
+        .feature-item::after {
+            content: '';
+            width: 150px;
+            height: 80px;
+            background-color: rgba(0, 225, 217, 0.1);
+            border-radius: 100%;
+            filter: blur(20px);
+            position: absolute;
+            bottom: -30%;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item.active {
+            background-color: rgba(0, 225, 217, 0.1);
+            box-shadow: 0px -3px 15px 0px rgba(0, 225, 217, 0.3) inset;
+            transform: translateY(5px);
+        }
+        
+        .feature-item.active::after {
+            opacity: 0.6;
+        }
+        
+        .feature-item:hover:not(.active) {
+            transform: translateY(3px);
+        }
+        
+        .feature-item:hover::after {
+            opacity: 0.5;
+        }
+        
+        .feature-name {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .feature-item.active .feature-name {
+            color: var(--primary-cyan);
+        }
+        
+        .feature-info {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-weight: 300;
+        }
+        
+        .model-viewer {
+            width: 60%;
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            animation: fadeIn 0.8s ease-out 0.4s forwards;
+            opacity: 0;
+        }
+        
+        .feature-highlight {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid var(--primary-cyan);
+            animation: pulse 2s infinite;
+            pointer-events: none;
+            z-index: 10;
+            box-shadow: 0 0 20px var(--primary-cyan);
+            transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        .feature-highlight::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--primary-cyan);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px var(--primary-cyan);
+        }
+        
+        .particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background-color: var(--primary-cyan);
+            pointer-events: none;
+            opacity: 0.3;
+            z-index: 0;
+            animation: float 8s infinite ease-in-out;
+            animation-delay: calc(var(--d) * 0.5s);
+        }
+        
+        /* Stdiot page specific styling */
+        .stdiot-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 30px;
+        }
+        
+        .stdiot-card {
+            background-color: var(--primaryBg);
+            clip-path: polygon(0% 5%, 5% 0%, 95% 0%, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0% 95%);
+            border-radius: 8px;
+            box-shadow: 0px -3px 15px 0px var(--primaryHi) inset;
+            padding: 30px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .stdiot-card::after {
+            content: '';
+            width: 150px;
+            height: 80px;
+            background-color: var(--primaryHi);
+            border-radius: 100%;
+            filter: blur(20px);
+            position: absolute;
+            bottom: -30%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+        
+        .stdiot-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stdiot-card:hover::after {
+            opacity: 0.6;
+        }
+        
+        .stdiot-card:nth-child(even) {
+            background-color: var(--accentBg);
+            box-shadow: 0px -3px 15px 0px var(--accentHi) inset;
+        }
+        
+        .stdiot-card:nth-child(even)::after {
+            background-color: var(--accentHi);
+        }
+        
+        .stdiot-title {
+            font-size: 24px;
+            color: var(--primary-cyan);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .stdiot-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-cyan);
+            border-radius: 4px;
+            width: 0;
+            transition: width 1.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        .metrics {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .metric {
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-cyan);
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* Womp page specific styling */
+        .womp-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        
+        .womp-section {
+            background-color: var(--bg-card);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+        }
+        
+        .womp-title {
+            font-size: 28px;
+            color: var(--primary-cyan);
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .womp-content {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .womp-text {
+            flex: 1;
+        }
+        
+        .womp-image {
+            flex: 1;
+            clip-path: polygon(0% 5%, 5% 0%, 95% 0%, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0% 95%);
+            overflow: hidden;
+            border-radius: 8px;
+            height: 300px;
+            background-color: rgba(0, 225, 217, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: rgba(0, 225, 217, 0.3);
+            font-weight: 700;
+        }
+        
+        .womp-paragraph {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+        
+        .womp-list {
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+        
+        .womp-list li {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        
+        .womp-list li::marker {
+            color: var(--primary-cyan);
+        }
+        
+        /* Allan Domini Logo */
+        .allan-logo {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        
+        .allan-logo:hover {
+            opacity: 1;
+        }
+        
+        .a-logo {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 5px;
+        }
+        
+        .allan-name {
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+        
+        @media screen and (max-width: 768px) {
+            .hero {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .hero-content {
+                width: 100%;
+                margin-bottom: 50px;
+            }
+            
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .sidebar-info {
+                position: relative;
+                right: auto;
+                top: auto;
+                width: 100%;
+                margin-top: 30px;
+            }
+            
+            .features-layout {
+                flex-direction: column;
+            }
+            
+            .features-list, .model-viewer {
+                width: 100%;
+            }
+            
+            .allan-logo {
+                bottom: 10px;
+                left: 10px;
+            }
+            
+            .a-logo {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .allan-name {
+                font-size: 12px;
+            }
+            
+            .stdiot-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .womp-content {
+                flex-direction: column;
+            }
+            
+            .womp-image {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="background-canvas"></canvas>
+    
+    <!-- Allan Domini Logo -->
+    <div class="allan-logo">
+        <svg class="a-logo" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+            <path d="M180,40 C230,60 250,140 200,250 C190,270 170,280 150,280 C130,280 110,270 100,250 C50,140 70,60 120,40 L150,0 L180,40 Z" fill="none" stroke="white" stroke-width="8"/>
+            <path d="M150,0 L120,40 C70,60 50,140 100,250 C110,270 130,280 150,280" fill="none" stroke="white" stroke-width="8"/>
+        </svg>
+        <div class="allan-name">Allan Domini</div>
+    </div>
+    
+    <div class="container" id="home-page">
+        <header id="header">
+            <div class="logo">Logo</div>
+            <div class="nav-links">
+                <a href="#" class="active" id="home-link">Home</a>
+                <a href="#" id="features-link">Featuress</a>
+                <a href="#" id="stdiot-link">Stdiot</a>
+                <a href="#" id="womp-link">Womp</a>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search...">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+            </div>
+        </header>
+        
+        <section class="hero">
+            <div class="hero-content" id="hero-content">
+                <!-- Content Slide 1 -->
+                <div class="content-slide active" id="slide-1">
+                    <h1 class="hero-title">Spatacle y<br>Console</h1>
+                    <p class="hero-description">
+                        Experience gaming like never before with our revolutionary handheld console.
+                        Immersive graphics, extended battery life, and ergonomic design.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot active" data-slide="1"></div>
+                        <div class="dot" data-slide="2"></div>
+                        <div class="dot" data-slide="3"></div>
+                        <div class="dot" data-slide="4"></div>
+                        <div class="dot" data-slide="5"></div>
+                        <div class="dot" data-slide="6"></div>
+                        <div class="dot" data-slide="7"></div>
+                        <div class="dot" data-slide="8"></div>
+                        <div class="dot" data-slide="9"></div>
+                        <div class="dot" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>BUY NOW</button>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <!-- Content Slide 2 -->
+                <div class="content-slide" id="slide-2">
+                    <h1 class="hero-title">Ultimate<br>Control</h1>
+                    <p class="hero-description">
+                        Precision engineered controls with haptic feedback and customizable button mapping.
+                        Take your gameplay to the next level with unparalleled responsiveness.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot" data-slide="1"></div>
+                        <div class="dot active" data-slide="2"></div>
+                        <div class="dot" data-slide="3"></div>
+                        <div class="dot" data-slide="4"></div>
+                        <div class="dot" data-slide="5"></div>
+                        <div class="dot" data-slide="6"></div>
+                        <div class="dot" data-slide="7"></div>
+                        <div class="dot" data-slide="8"></div>
+                        <div class="dot" data-slide="9"></div>
+                        <div class="dot" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>LEARN MORE</button>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <!-- Content Slide 3 -->
+                <div class="content-slide" id="slide-3">
+                    <h1 class="hero-title">Stunning<br>Graphics</h1>
+                    <p class="hero-description">
+                        High-performance GPU delivers breathtaking visuals on a vibrant 7-inch OLED display.
+                        Experience games with realistic lighting and smooth 120FPS performance.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot" data-slide="1"></div>
+                        <div class="dot" data-slide="2"></div>
+                        <div class="dot active" data-slide="3"></div>
+                        <div class="dot" data-slide="4"></div>
+                        <div class="dot" data-slide="5"></div>
+                        <div class="dot" data-slide="6"></div>
+                        <div class="dot" data-slide="7"></div>
+                        <div class="dot" data-slide="8"></div>
+                        <div class="dot" data-slide="9"></div>
+                        <div class="dot" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>SEE DEMOS</button>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <!-- Content Slide 4 -->
+                <div class="content-slide" id="slide-4">
+                    <h1 class="hero-title">Extended<br>Gameplay</h1>
+                    <p class="hero-description">
+                        Revolutionary battery technology provides up to 10 hours of continuous gaming.
+                        Fast charging gives you 3 hours of gameplay with just 30 minutes of charge.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot" data-slide="1"></div>
+                        <div class="dot" data-slide="2"></div>
+                        <div class="dot" data-slide="3"></div>
+                        <div class="dot active" data-slide="4"></div>
+                        <div class="dot" data-slide="5"></div>
+                        <div class="dot" data-slide="6"></div>
+                        <div class="dot" data-slide="7"></div>
+                        <div class="dot" data-slide="8"></div>
+                        <div class="dot" data-slide="9"></div>
+                        <div class="dot" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>TECH SPECS</button>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <!-- Content Slide 5 -->
+                <div class="content-slide" id="slide-5">
+                    <h1 class="hero-title">Cloud<br>Gaming</h1>
+                    <p class="hero-description">
+                        Seamless integration with cloud gaming services for unlimited access to the latest titles.
+                        Play anywhere with stable, low-latency streaming over 5G or Wi-Fi.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot" data-slide="1"></div>
+                        <div class="dot" data-slide="2"></div>
+                        <div class="dot" data-slide="3"></div>
+                        <div class="dot" data-slide="4"></div>
+                        <div class="dot active" data-slide="5"></div>
+                        <div class="dot" data-slide="6"></div>
+                        <div class="dot" data-slide="7"></div>
+                        <div class="dot" data-slide="8"></div>
+                        <div class="dot" data-slide="9"></div>
+                        <div class="dot" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>SUBSCRIBE</button>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <!-- Additional slides 6-10 with different content -->
+                <div class="content-slide" id="slide-6">
+                    <h1 class="hero-title">Social<br>Gaming</h1>
+                    <p class="hero-description">
+                        Built-in social features let you connect with friends, share gameplay moments,
+                        and join communities. Live streaming capabilities with just one button press.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot" data-slide="1"></div>
+                        <div class="dot" data-slide="2"></div>
+                        <div class="dot" data-slide="3"></div>
+                        <div class="dot" data-slide="4"></div>
+                        <div class="dot" data-slide="5"></div>
+                        <div class="dot active" data-slide="6"></div>
+                        <div class="dot" data-slide="7"></div>
+                        <div class="dot" data-slide="8"></div>
+                        <div class="dot" data-slide="9"></div>
+                        <div class="dot" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>CONNECT</button>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <div class="content-slide" id="slide-7">
+                    <h1 class="hero-title">Adaptive<br>Audio</h1>
+                    <p class="hero-description">
+                        3D spatial audio technology creates an immersive soundscape that reacts to your environment.
+                        Experience games with unprecedented audio clarity and positional awareness.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot" data-slide="1"></div>
+                        <div class="dot" data-slide="2"></div>
+                        <div class="dot" data-slide="3"></div>
+                        <div class="dot" data-slide="4"></div>
+                        <div class="dot" data-slide="5"></div>
+                        <div class="dot" data-slide="6"></div>
+                        <div class="dot active" data-slide="7"></div>
+                        <div class="dot" data-slide="8"></div>
+                        <div class="dot" data-slide="9"></div>
+                        <div class="dot" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>LISTEN</button>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <div class="content-slide" id="slide-8">
+                    <h1 class="hero-title">Storage<br>Options</h1>
+                    <p class="hero-description">
+                        Choose from 256GB, 512GB or 1TB of ultra-fast SSD storage.
+                        Expandable with microSD cards up to 2TB for your entire game library.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot" data-slide="1"></div>
+                        <div class="dot" data-slide="2"></div>
+                        <div class="dot" data-slide="3"></div>
+                        <div class="dot" data-slide="4"></div>
+                        <div class="dot" data-slide="5"></div>
+                        <div class="dot" data-slide="6"></div>
+                        <div class="dot" data-slide="7"></div>
+                        <div class="dot active" data-slide="8"></div>
+                        <div class="dot" data-slide="9"></div>
+                        <div class="dot" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>COMPARE</button>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <div class="content-slide" id="slide-9">
+                    <h1 class="hero-title">Developer<br>Friendly</h1>
+                    <p class="hero-description">
+                        Open development environment with comprehensive SDKs and tools.
+                        Indie-friendly platform with streamlined publishing process.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot" data-slide="1"></div>
+                        <div class="dot" data-slide="2"></div>
+                        <div class="dot" data-slide="3"></div>
+                        <div class="dot" data-slide="4"></div>
+                        <div class="dot" data-slide="5"></div>
+                        <div class="dot" data-slide="6"></div>
+                        <div class="dot" data-slide="7"></div>
+                        <div class="dot" data-slide="8"></div>
+                        <div class="dot active" data-slide="9"></div>
+                        <div class="dot" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>DEV PORTAL</button>
+                        <span></span>
+                    </div>
+                </div>
+                
+                <div class="content-slide" id="slide-10">
+                    <h1 class="hero-title">Release<br>Date</h1>
+                    <p class="hero-description">
+                        Pre-orders starting soon. Be among the first to experience gaming's next evolution.
+                        Global launch set for June 2025 with exclusive early access for pre-order customers.
+                    </p>
+                    
+                    <div class="dots-navigation">
+                        <div class="dot" data-slide="1"></div>
+                        <div class="dot" data-slide="2"></div>
+                        <div class="dot" data-slide="3"></div>
+                        <div class="dot" data-slide="4"></div>
+                        <div class="dot" data-slide="5"></div>
+                        <div class="dot" data-slide="6"></div>
+                        <div class="dot" data-slide="7"></div>
+                        <div class="dot" data-slide="8"></div>
+                        <div class="dot" data-slide="9"></div>
+                        <div class="dot active" data-slide="10"></div>
+                    </div>
+                    
+                    <div class="styled-button">
+                        <button>PRE-ORDER</button>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-info glass" id="sidebar-info">
+                <h2 class="sidebar-title">Oroy in 6stmips</h2>
+                <div class="dot-line">
+                    <div class="mini-dot" style="--i: 1"></div>
+                    <div class="mini-dot" style="--i: 2"></div>
+                    <div class="mini-dot" style="--i: 3"></div>
+                    <div class="mini-dot" style="--i: 4"></div>
+                    <div class="mini-dot" style="--i: 5"></div>
+                    <div class="mini-dot" style="--i: 6"></div>
+                    <div class="mini-dot" style="--i: 7"></div>
+                    <div class="mini-dot" style="--i: 8"></div>
+                    <div class="mini-dot" style="--i: 9"></div>
+                    <div class="mini-dot" style="--i: 10"></div>
+                </div>
+                <p class="sidebar-description">
+                    Advanced processor architecture delivers lightning-fast performance for all your games.
+                    Experience zero lag with our next-generation cooling system and optimized hardware.
+                </p>
+                
+                <div class="feature-tabs">
+                    <div class="feature-tab">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                        </svg>
+                    </div>
+                    <div class="feature-tab">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                    </div>
+                    <div class="feature-tab">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M15 7.5V2H9v5.5l3 3 3-3zM7.5 9H2v6h5.5l3-3-3-3zM9 16.5V22h6v-5.5l-3-3-3 3zM16.5 9l-3 3 3 3H22V9h-5.5z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="features-grid" id="features-grid">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Blotipice</h3>
+                <p class="feature-description">
+                    Enhanced graphics processing with support for real-time ray tracing
+                    and ultra-high definition display output.
+                </p>
+            </div>
+            
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-5h2v2h-2zm0-8h2v6h-2z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Intetrriom</h3>
+                <p class="feature-description">
+                    Advanced user interface with intuitive controls
+                    and customizable button mapping for every game.
+                </p>
+            </div>
+            
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Plpot Slipa</h3>
+                <p class="feature-description">
+                    Seamless connectivity options including Wi-Fi 6,
+                    Bluetooth 5.2, and high-speed USB-C for expansions.
+                </p>
+            </div>
+            
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Cctagpt Samor</h3>
+                <p class="feature-description">
+                    Multiplayer capabilities with built-in voice chat
+                    and social features for connecting with friends.
+                </p>
+            </div>
+            
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Outaun</h3>
+                <p class="feature-description">
+                    Revolutionary display technology with adaptive brightness
+                    and ultra-responsive touch capabilities.
+                </p>
+            </div>
+        </section>
+        
+        <div class="carousel-arrow">
+            <svg viewBox="0 0 24 24">
+                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Features Page -->
+    <div class="container page" id="features-page">
+        <header>
+            <div class="logo">Logo</div>
+            <div class="nav-links">
+                <a href="#" id="home-link-2">Home</a>
+                <a href="#" class="active" id="features-link-2">Featuress</a>
+                <a href="#" id="stdiot-link-2">Stdiot</a>
+                <a href="#" id="womp-link-2">Womp</a>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search...">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+            </div>
+        </header>
+        
+        <h1 class="page-header">Console Features</h1>
+        
+        <div class="features-layout">
+            <div class="features-list" id="features-list">
+                <div class="feature-item active" data-feature="dpad">
+                    <h3 class="feature-name">Enhanced D-Pad Control</h3>
+                    <p class="feature-info">
+                        Precision engineered D-pad with advanced pressure sensitivity. 
+                        Perfect for fighting games and platformers with its responsive tactile feedback.
+                        Features 8-way directional input for precise movement control.
+                    </p>
+                </div>
+                
+                <div class="feature-item" data-feature="buttons">
+                    <h3 class="feature-name">Action Buttons</h3>
+                    <p class="feature-info">
+                        Ergonomically designed action buttons that respond to the slightest touch.
+                        Custom-tuned for maximum comfort during extended gaming sessions.
+                        Includes pressure sensitivity for games that support variable input.
+                    </p>
+                </div>
+                
+                <div class="feature-item" data-feature="light">
+                    <h3 class="feature-name">Ambient Light System</h3>
+                    <p class="feature-info">
+                        Integrated RGB lighting system that responds to in-game events.
+                        Customizable through the companion app for a personalized gaming experience.
+                        Dynamic lighting adapts to gameplay, providing immersive visual feedback.
+                    </p>
+                </div>
+                
+                <div class="feature-item" data-feature="ports">
+                    <h3 class="feature-name">Expanded Connectivity</h3>
+                    <p class="feature-info">
+                        Multiple high-speed ports including USB-C, HDMI output, and expandable storage.
+                        Connect to external displays or accessories with ease.
+                        Supports wireless projection to compatible smart TVs and monitors.
+                    </p>
+                </div>
+                
+                <div class="feature-item" data-feature="speakers">
+                    <h3 class="feature-name">Immersive Audio</h3>
+                    <p class="feature-info">
+                        Built-in stereo speakers with spatial audio technology.
+                        Experience games with rich, directional sound without headphones.
+                        Features advanced audio processing for 3D positional audio and crystal-clear voice chat.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="model-viewer" id="feature-highlight-container">
+                <div class="feature-highlight" id="feature-highlight"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stdiot Page -->
+    <div class="container page" id="stdiot-page">
+        <header>
+            <div class="logo">Logo</div>
+            <div class="nav-links">
+                <a href="#" id="home-link-3">Home</a>
+                <a href="#" id="features-link-3">Featuress</a>
+                <a href="#" class="active" id="stdiot-link-3">Stdiot</a>
+                <a href="#" id="womp-link-3">Womp</a>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search...">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+            </div>
+        </header>
+        
+        <h1 class="page-header">Console Performance</h1>
+        
+        <div class="stdiot-grid">
+            <div class="stdiot-card">
+                <h3 class="stdiot-title">CPU Performance</h3>
+                <p class="stdiot-description">8-core custom processor with adaptive clock speeds up to 3.5GHz provides incredibly smooth gameplay across all titles.</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 85%"></div></div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">3.5GHz</div>
+                        <div class="metric-label">Clock Speed</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">8</div>
+                        <div class="metric-label">Cores</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">16MB</div>
+                        <div class="metric-label">Cache</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stdiot-card">
+                <h3 class="stdiot-title">GPU Performance</h3>
+                <p class="stdiot-description">Custom GPU architecture delivers 10 teraflops of computing power with hardware-accelerated ray tracing for stunning visuals.</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 90%"></div></div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">10 TF</div>
+                        <div class="metric-label">Performance</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">1.5GHz</div>
+                        <div class="metric-label">Core Clock</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">12GB</div>
+                        <div class="metric-label">VRAM</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stdiot-card">
+                <h3 class="stdiot-title">Memory</h3>
+                <p class="stdiot-description">16GB of ultra-fast LPDDR5 memory with 256-bit bus ensures seamless multitasking and quick loading times.</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 80%"></div></div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">16GB</div>
+                        <div class="metric-label">Capacity</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">6400</div>
+                        <div class="metric-label">MHz</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">800</div>
+                        <div class="metric-label">GB/s</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stdiot-card">
+                <h3 class="stdiot-title">Storage</h3>
+                <p class="stdiot-description">Custom NVMe SSD storage with dedicated decompression hardware for instantaneous game loading and seamless world transitions.</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 95%"></div></div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">1TB</div>
+                        <div class="metric-label">Capacity</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">5.5</div>
+                        <div class="metric-label">GB/s Raw</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">9.0</div>
+                        <div class="metric-label">GB/s Comp.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stdiot-card">
+                <h3 class="stdiot-title">Display</h3>
+                <p class="stdiot-description">7-inch OLED display with 1440p resolution, 120Hz refresh rate, and HDR10+ support for vibrant, fluid visuals.</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 92%"></div></div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">1440p</div>
+                        <div class="metric-label">Resolution</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">120Hz</div>
+                        <div class="metric-label">Refresh</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">500</div>
+                        <div class="metric-label">nits</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stdiot-card">
+                <h3 class="stdiot-title">Battery</h3>
+                <p class="stdiot-description">Advanced lithium polymer battery technology with dynamic power management for extended gameplay up to 10 hours.</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 88%"></div></div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">10hr</div>
+                        <div class="metric-label">Gaming</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">15hr</div>
+                        <div class="metric-label">Video</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">30min</div>
+                        <div class="metric-label">Fast Charge</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Womp Page -->
+    <div class="container page" id="womp-page">
+        <header>
+            <div class="logo">Logo</div>
+            <div class="nav-links">
+                <a href="#" id="home-link-4">Home</a>
+                <a href="#" id="features-link-4">Featuress</a>
+                <a href="#" id="stdiot-link-4">Stdiot</a>
+                <a href="#" class="active" id="womp-link-4">Womp</a>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search...">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+            </div>
+        </header>
+        
+        <h1 class="page-header">Gaming Ecosystem</h1>
+        
+        <div class="womp-container">
+            <section class="womp-section">
+                <h2 class="womp-title">Game Library</h2>
+                <div class="womp-content">
+                    <div class="womp-text">
+                        <p class="womp-paragraph">
+                            The Spatacle y Console launches with an impressive library of over 300 titles, including exclusive games and optimized versions of popular franchises.
+                        </p>
+                        <p class="womp-paragraph">
+                            Our partnerships with major studios and indie developers ensure a steady stream of high-quality content across all genres.
+                        </p>
+                        <ul class="womp-list">
+                            <li>30+ exclusive launch titles developed specifically for our hardware</li>
+                            <li>Backward compatibility with selected titles from previous generations</li>
+                            <li>Cloud gaming integration for access to thousands of additional games</li>
+                            <li>Monthly subscription service with rotating selection of premium titles</li>
+                        </ul>
+                    </div>
+                    <div class="womp-image">
+                        GAMES
+                    </div>
+                </div>
+            </section>
+            
+            <section class="womp-section">
+                <h2 class="womp-title">Online Services</h2>
+                <div class="womp-content">
+                    <div class="womp-image">
+                        ONLINE
+                    </div>
+                    <div class="womp-text">
+                        <p class="womp-paragraph">
+                            Our comprehensive online platform connects players, delivers content, and provides essential services to enhance your gaming experience.
+                        </p>
+                        <p class="womp-paragraph">
+                            The Spatacle Network offers seamless integration between your console, mobile devices, and desktop computers.
+                        </p>
+                        <ul class="womp-list">
+                            <li>Cross-platform play with friends on different devices</li>
+                            <li>Cloud saves synchronized across all your gaming platforms</li>
+                            <li>Integrated voice chat and messaging system</li>
+                            <li>Game streaming to mobile devices when you're away from your console</li>
+                            <li>Achievement system with real-world rewards and benefits</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="womp-section">
+                <h2 class="womp-title">Developer Program</h2>
+                <div class="womp-content">
+                    <div class="womp-text">
+                        <p class="womp-paragraph">
+                            We've created a welcoming environment for developers of all sizes to bring their creative visions to life on our platform.
+                        </p>
+                        <p class="womp-paragraph">
+                            From indie studios to major publishers, our comprehensive tools and support systems make development efficient and accessible.
+                        </p>
+                        <ul class="womp-list">
+                            <li>Flexible revenue sharing models that favor creators</li>
+                            <li>Comprehensive SDK with extensive documentation</li>
+                            <li>Developer support community with direct access to our engineering team</li>
+                            <li>Featured placement opportunities for exceptional indie titles</li>
+                            <li>Early access to upcoming hardware features and capabilities</li>
+                        </ul>
+                    </div>
+                    <div class="womp-image">
+                        DEVS
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+        // Three.js setup
+        const backgroundCanvas = document.getElementById('background-canvas');
+        
+        let scene, camera, renderer;
+        let console3D;
+        let mouseX = 0, mouseY = 0;
+        let targetMouseX = 0, targetMouseY = 0;
+        let currentZoomPart = null;
+        let isZooming = false;
+        let originalCameraPosition = { x: 0, y: 0, z: 15 };
+        let zoomDuration = 1.0; // in seconds
+        let zoomStartTime = 0;
+        let zoomStartPosition = { x: 0, y: 0, z: 0 };
+        let zoomTargetPosition = { x: 0, y: 0, z: 0 };
+        let consoleRotationTarget = { x: 0, y: 0, z: 0 };
+        let consoleOriginalRotation = { x: 0, y: 0, z: 0 };
+        
+        // Feature positions for highlighting and zooming
+        const featurePositions = {
+            dpad: { 
+        x: -3, y: -1, z: 0.26, 
+        cameraPosition: { x: -3, y: -1, z: 3 },
+        consoleRotation: { x: 0.5, y: -0.5, z: 0.2 } // Rotação mais acentuada
+    },
+    buttons: { 
+        x: 3, y: -0.9, z: 0.26, 
+        cameraPosition: { x: 15, y: 9.5, z: 2 },
+        consoleRotation: { x: 0.3, y: 0.9, z: -0.1 } // Giro mais intenso
+    },
+            light: { 
+                x: 4.5, y: -2, z: 0.3, 
+                cameraPosition: { x: 4.5, y: -2, z: 4 },
+                consoleRotation: { x: 0.2, y: 0.5, z: 0.1 }
+            },
+            ports: { 
+                x: 0, y: -2, z: 0, 
+                cameraPosition: { x: 0, y: -2.5, z: 4 },
+                consoleRotation: { x: 0.5, y: 0, z: 0 }
+            },
+            speakers: { 
+                x: -1.5, y: 1, z: 0.41, 
+                cameraPosition: { x: -1.5, y: 1, z: 3 },
+                consoleRotation: { x: -0.1, y: -0.2, z: 0 }
+            }
+        };
+        
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 15;
+            originalCameraPosition = { ...camera.position };
+            
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: backgroundCanvas,
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x1a1a1a, 1);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0x00e1d9, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+            
+            const pointLight = new THREE.PointLight(0x00e1d9, 1, 100);
+            pointLight.position.set(0, 2, 5);
+            scene.add(pointLight);
+            
+            // Create background elements
+            createBackgroundParticles();
+            
+            // Create console as background element
+            createBackgroundConsole();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Handle mouse movement
+            document.addEventListener('mousemove', onMouseMove);
+            
+            // Start animation
+            animate();
+            
+            // Setup navigation
+            setupNavigation();
+            
+            // Setup feature highlighting
+            setupFeatureHighlighting();
+            
+            // Setup dots navigation
+            setupDotsNavigation();
+            
+            // Create DOM particles
+            createParticles();
+            
+            // Initialize progress bars on the Stdiot page
+            initProgressBars();
+        }
+        
+        function createBackgroundConsole() {
+            // Caminho para o arquivo GLB
+            const glbPath = './sony_psp.glb'
+            
+            // Crie um carregador GLB
+            const loader = new THREE.GLTFLoader();
+            
+            // Carregue o modelo
+            loader.load(
+                glbPath,
+                function (gltf) {
+                    // Modelo carregado com sucesso
+                    console3D = gltf.scene;
+                    
+                    // Ajuste a escala conforme necessário
+                    console3D.scale.set(2, 2, 2); // Ajuste dependendo do tamanho do seu modelo
+                    
+                    // Ajuste a posição
+                    console3D.position.set(0, 0, -10); // Posiciona o modelo no fundo
+                    
+                    // Rotação inicial
+                    console3D.rotation.x = 0.2;
+                    console3D.rotation.y = -0.2;
+                    
+                    // Armazene a rotação original
+                    consoleOriginalRotation = {
+                        x: console3D.rotation.x,
+                        y: console3D.rotation.y,
+                        z: console3D.rotation.z
+                    };
+                    
+                    // Adicione à cena
+                    scene.add(console3D);
+                },
+                function (xhr) {
+                    // Progresso do carregamento
+                    console.log((xhr.loaded / xhr.total * 100) + '% carregado');
+                },
+                function (error) {
+                    // Erro no carregamento
+                    console.error('Erro ao carregar o modelo GLB:', error);
+                    
+                    // Se houver um erro, crie o console retangular como fallback
+                    createFallbackConsole();
+                }
+            );
+        }
+        
+        // Função de fallback caso o modelo GLB não seja carregado
+        function createFallbackConsole() {
+            // Código original para criar o console retangular...
+            const consoleGroup = new THREE.Group();
+            
+            // Main body - simple black rectangle
+            const geometry = new THREE.BoxGeometry(10, 5, 0.5);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x111111,
+                specular: 0x222222,
+                shininess: 10
+            });
+            const body = new THREE.Mesh(geometry, material);
+            
+            // ... (resto do código do console retangular) ...
+            
+            // Armazene a rotação original
+            consoleOriginalRotation = {
+                x: consoleGroup.rotation.x,
+                y: consoleGroup.rotation.y,
+                z: consoleGroup.rotation.z
+            };
+            
+            // Adicione à cena
+            scene.add(consoleGroup);
+            console3D = consoleGroup;
+        }
+        
+        function createBackgroundParticles() {
+            const particlesCount = 200;
+            const positions = new Float32Array(particlesCount * 3);
+            const sizes = new Float32Array(particlesCount);
+            
+            for (let i = 0; i < particlesCount; i++) {
+                positions[i * 3] = (Math.random() * 2 - 1) * 100;
+                positions[i * 3 + 1] = (Math.random() * 2 - 1) * 50;
+                positions[i * 3 + 2] = (Math.random() * 2 - 1) * 100;
+                sizes[i] = Math.random() * 2;
+            }
+            
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            
+            const material = new THREE.PointsMaterial({
+                color: 0x00e1d9,
+                size: 0.5,
+                transparent: true,
+                opacity: 0.5,
+                sizeAttenuation: true
+            });
+            
+            const particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+        }
+        
+        function createParticles() {
+            for (let i = 0; i < 100; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random position
+                const xPos = Math.random() * 100;
+                const yPos = Math.random() * 100;
+                
+                particle.style.left = `${xPos}%`;
+                particle.style.top = `${yPos}%`;
+                
+                // Random size
+                const size = Math.random() * 3 + 1;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random depth and animation delay
+                const zIndex = Math.floor(Math.random() * 10) - 5;
+                particle.style.zIndex = zIndex;
+                particle.style.setProperty('--d', Math.random() * 10);
+                
+                document.body.appendChild(particle);
+            }
+        }
+        
+        function initProgressBars() {
+            // Animate progress bars on Stdiot page when it becomes visible
+            const progressBars = document.querySelectorAll('.progress-fill');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const width = entry.target.style.width;
+                        entry.target.style.width = '0';
+                        setTimeout(() => {
+                            entry.target.style.width = width;
+                        }, 100);
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            progressBars.forEach(bar => {
+                observer.observe(bar);
+            });
+        }
+        
+        function onMouseMove(event) {
+            // Calculate mouse position in normalized device coordinates
+            // (-1 to +1) for both components
+            targetMouseX = (event.clientX / window.innerWidth) * 2 - 1;
+            targetMouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            // Use mouse position to create parallax effect for UI elements
+            if (!isZooming) {
+                moveElements(event);
+            }
+        }
+        
+        function moveElements(event) {
+            const xRatio = event.clientX / window.innerWidth;
+            const yRatio = event.clientY / window.innerHeight;
+            
+            // Calculate movement based on mouse position
+            const xOffset = (xRatio - 0.5) * 30;
+            const yOffset = (yRatio - 0.5) * 30;
+            
+            // Move DOM elements with different intensity for parallax effect
+            if (document.getElementById('hero-content')) {
+                document.getElementById('hero-content').style.transform = `translate(${xOffset * 0.3}px, ${yOffset * 0.3}px)`;
+            }
+            
+            if (document.getElementById('sidebar-info')) {
+                document.getElementById('sidebar-info').style.transform = `translate(${xOffset * 0.5}px, ${yOffset * 0.5}px)`;
+            }
+            
+            if (document.getElementById('features-grid')) {
+                document.getElementById('features-grid').style.transform = `translate(${xOffset * 0.2}px, ${yOffset * 0.2}px)`;
+            }
+            
+            if (document.getElementById('features-list')) {
+                document.getElementById('features-list').style.transform = `translate(${xOffset * 0.3}px, ${yOffset * 0.3}px)`;
+        }
+        
+        // Create parallax effect on background particles
+        document.querySelectorAll('.particle').forEach((particle) => {
+            const depth = parseInt(particle.style.zIndex || 0);
+            const intensity = (depth + 5) / 10;
+            
+            particle.style.transform = `translate(${xOffset * intensity}px, ${yOffset * intensity}px)`;
+        });
+    }
+    
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // Smooth mouse movement
+        mouseX += (targetMouseX - mouseX) * 0.05;
+        mouseY += (targetMouseY - mouseY) * 0.05;
+        
+        // Skip console3D operations if it's not loaded yet
+        if (!console3D) {
+            renderer.render(scene, camera);
+            return;
+        }
+        
+        // Handle zooming animation
+        if (isZooming) {
+            const currentTime = Date.now();
+            const elapsed = (currentTime - zoomStartTime) / 1000; // convert to seconds
+            
+            if (elapsed < zoomDuration) {
+                // Calculate interpolation factor
+                const t = elapsed / zoomDuration;
+                const smoothT = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // Cubic easing
+                
+                // Interpolate camera position
+                camera.position.x = zoomStartPosition.x + (zoomTargetPosition.x - zoomStartPosition.x) * smoothT;
+                camera.position.y = zoomStartPosition.y + (zoomTargetPosition.y - zoomStartPosition.y) * smoothT;
+                camera.position.z = zoomStartPosition.z + (zoomTargetPosition.z - zoomStartPosition.z) * smoothT;
+                
+                // Interpolate console rotation
+                console3D.rotation.x = consoleOriginalRotation.x + (consoleRotationTarget.x - consoleOriginalRotation.x) * smoothT;
+                console3D.rotation.y = consoleOriginalRotation.y + (consoleRotationTarget.y - consoleOriginalRotation.y) * smoothT;
+                console3D.rotation.z = consoleOriginalRotation.z + (consoleRotationTarget.z - consoleOriginalRotation.z) * smoothT;
+                
+                // Update camera to look at the console
+                camera.lookAt(console3D.position);
+            } else {
+                // Animation complete
+                camera.position.copy(zoomTargetPosition);
+                console3D.rotation.x = consoleRotationTarget.x;
+                console3D.rotation.y = consoleRotationTarget.y;
+                console3D.rotation.z = consoleRotationTarget.z;
+            }
+        } else {
+            // Normal rotation when not zooming
+            console3D.rotation.y += 0.003;
+            
+            // Mouse influence on rotation
+            console3D.rotation.x = consoleOriginalRotation.x + mouseY * 0.1;
+            console3D.rotation.z = mouseX * 0.05;
+            
+            // Slight movement based on mouse
+            console3D.position.x = mouseX * 3;
+            console3D.position.y = mouseY * 2;
+        }
+        
+        // Update feature highlight if we're on the features page
+        if (document.getElementById('features-page').classList.contains('active') && currentZoomPart) {
+            updateFeatureHighlight(currentZoomPart);
+        }
+        
+        renderer.render(scene, camera);
+    }
+    
+    function setupNavigation() {
+        // Home navigation from different pages
+        const homeLinks = document.querySelectorAll('#home-link, #home-link-2, #home-link-3, #home-link-4');
+        homeLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('home-page');
+                resetZoom();
+                currentZoomPart = null;
+            });
+        });
+        
+        // Features navigation from different pages
+        const featuresLinks = document.querySelectorAll('#features-link, #features-link-2, #features-link-3, #features-link-4');
+        featuresLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('features-page');
+                currentZoomPart = 'dpad'; // Start with default feature
+                zoomToFeature('dpad');
+                updateFeatureSelection('dpad');
+            });
+        });
+        
+        // Stdiot navigation from different pages
+        const stdiotLinks = document.querySelectorAll('#stdiot-link, #stdiot-link-2, #stdiot-link-3, #stdiot-link-4');
+        stdiotLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('stdiot-page');
+                resetZoom();
+                currentZoomPart = null;
+                
+                // Animation for progress bars
+                animateProgressBars();
+            });
+        });
+        
+        // Womp navigation from different pages
+        const wompLinks = document.querySelectorAll('#womp-link, #womp-link-2, #womp-link-3, #womp-link-4');
+        wompLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('womp-page');
+                resetZoom();
+                currentZoomPart = null;
+            });
+        });
+    }
+    
+    function showPage(pageId) {
+        // Hide all pages
+        document.querySelectorAll('.page, #home-page').forEach(page => {
+            page.style.display = 'none';
+            if (page.classList.contains('active')) {
+                page.classList.remove('active');
+            }
+        });
+        
+        // Show and activate the selected page
+        const page = document.getElementById(pageId);
+        page.style.display = 'block';
+        setTimeout(() => {
+            page.classList.add('active');
+        }, 10);
+        
+        // Update active nav links
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // Determine which nav link to make active based on page
+        let selector;
+        switch(pageId) {
+            case 'home-page':
+                selector = '#home-link, #home-link-2, #home-link-3, #home-link-4';
+                break;
+            case 'features-page':
+                selector = '#features-link, #features-link-2, #features-link-3, #features-link-4';
+                break;
+            case 'stdiot-page':
+                selector = '#stdiot-link, #stdiot-link-2, #stdiot-link-3, #stdiot-link-4';
+                break;
+            case 'womp-page':
+                selector = '#womp-link, #womp-link-2, #womp-link-3, #womp-link-4';
+                break;
+        }
+        
+        document.querySelectorAll(selector).forEach(link => {
+            link.classList.add('active');
+        });
+    }
+    
+    function animateProgressBars() {
+        const progressBars = document.querySelectorAll('.progress-fill');
+        progressBars.forEach(bar => {
+            const targetWidth = bar.style.width;
+            bar.style.width = '0';
+            setTimeout(() => {
+                bar.style.width = targetWidth;
+            }, 300);
+        });
+    }
+    
+    function setupFeatureHighlighting() {
+        // Setup feature items click handlers
+        document.querySelectorAll('.feature-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const featureType = item.getAttribute('data-feature');
+                updateFeatureSelection(featureType);
+                zoomToFeature(featureType);
+            });
+        });
+    }
+    
+    function setupDotsNavigation() {
+        // Setup dot navigation
+        document.querySelectorAll('.dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                const slideNumber = dot.getAttribute('data-slide');
+                showSlide(slideNumber);
+                
+                // Update active dot
+                document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+            });
+        });
+    }
+    
+    function showSlide(slideNumber) {
+        // Hide all slides
+        document.querySelectorAll('.content-slide').forEach(slide => {
+            slide.classList.remove('active');
+        });
+        
+        // Show selected slide
+        const slide = document.getElementById(`slide-${slideNumber}`);
+        if (slide) {
+            slide.classList.add('active');
+        }
+    }
+    
+    function zoomToFeature(featureType) {
+        if (!featurePositions[featureType]) return;
+        
+        // Set start position (current camera position)
+        zoomStartPosition = { ...camera.position };
+        
+        // Set target position based on feature
+        zoomTargetPosition = { ...featurePositions[featureType].cameraPosition };
+        
+        // Set console rotation target
+        consoleRotationTarget = { ...featurePositions[featureType].consoleRotation };
+        
+        // Start zooming animation
+        zoomStartTime = Date.now();
+        isZooming = true;
+        
+        // Update the current zoom part
+        currentZoomPart = featureType;
+    }
+    
+    function resetZoom() {
+        // Reset camera to original position
+        zoomStartPosition = { ...camera.position };
+        zoomTargetPosition = { ...originalCameraPosition };
+        
+        // Reset console rotation
+        consoleRotationTarget = { ...consoleOriginalRotation };
+        
+        // Start zoom out animation
+        zoomStartTime = Date.now();
+        isZooming = true;
+        
+        // After animation completes, turn off zooming mode
+        setTimeout(() => {
+            isZooming = false;
+        }, zoomDuration * 1000);
+    }
+    
+    function updateFeatureSelection(featureType) {
+        // Update selection in UI
+        document.querySelectorAll('.feature-item').forEach(item => {
+            if (item.getAttribute('data-feature') === featureType) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+        
+        // Set current zoom part
+        currentZoomPart = featureType;
+        
+        // Update the highlight immediately
+        updateFeatureHighlight(featureType);
+    }
+    
+    function updateFeatureHighlight(featureType) {
+        const highlightElement = document.getElementById('feature-highlight');
+        if (!highlightElement) return;
+        
+        // Get position data for this feature
+        const position = featurePositions[featureType];
+        if (!position) return;
+        
+        // Convert the position to screen coordinates using the console's position and rotation
+        const vector = new THREE.Vector3(position.x, position.y, position.z);
+        
+        // Apply console rotation to get the world position
+        const worldPos = vector.clone();
+        worldPos.applyMatrix4(console3D.matrixWorld);
+        
+        // Project to screen coordinates
+        const projected = worldPos.clone();
+        projected.project(camera);
+        
+        // Convert to pixel position
+        const widthHalf = window.innerWidth / 2;
+        const heightHalf = window.innerHeight / 2;
+        const x = (projected.x * widthHalf) + widthHalf;
+        const y = -(projected.y * heightHalf) + heightHalf;
+        
+        // Update highlight position
+        highlightElement.style.left = `${x}px`;
+        highlightElement.style.top = `${y}px`;
+        highlightElement.style.display = 'block';
+    }
+    
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', init);
+</script>
